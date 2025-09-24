@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Roman Numeral Clock</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --size: min(90vmin, 600px);
+      --face: #0b1220;
+      --hand-hour: #d4af37;
+      --hand-minute: #e5c07b;
+      --hand-second: #a83232;
+      font-family: 'Segoe UI', Roboto, system-ui;
+    }
+    body{
+      margin:0;
+      height:100vh;
+      display:grid;
+      place-items:center;
+      background:#071028;
+      color:#fff;
+      flex-direction:column;
+    }
+    .load-container{
+      position:absolute;
+      top:10px;
+      left:50%;
+      transform:translateX(-50%);
+      z-index:100;
+    }
+    .clock{
+      position:relative;
+      width:var(--size);
+      height:var(--size);
+      border-radius:50%;
+      background:var(--face);
+      box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+      background-size: cover;
+      background-position: center;
+    }
+    .hand{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform-origin:50% 90%;
+      transform:rotate(0deg);
+    }
+    .hand.hour{
+      width:20px;
+      height:28%;
+      background: var(--hand-hour);
+      clip-path: polygon(50% 0%, 75% 10%, 70% 25%, 75% 50%, 50% 100%, 25% 50%, 30% 25%, 25% 10%);
+      box-shadow: 0 0 8px rgba(0,0,0,0.7);
+      border: 1px solid #8b7500;
+      background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.2) 0px, rgba(0,0,0,0.2) 2px, transparent 2px, transparent 4px);
+    }
+    .hand.minute{
+      width:16px;
+      height:38%;
+      background: var(--hand-minute);
+      clip-path: polygon(50% 0%, 72% 8%, 68% 20%, 72% 45%, 50% 100%, 28% 45%, 32% 20%, 28% 8%);
+      box-shadow: 0 0 8px rgba(0,0,0,0.7);
+      border: 1px solid #aa8c50;
+      background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.15) 0px, rgba(0,0,0,0.15) 3px, transparent 3px, transparent 6px);
+    }
+    .hand.second{
+      width:4px;
+      height:42%;
+      background: var(--hand-second);
+      clip-path: polygon(50% 0%, 60% 20%, 55% 50%, 60% 80%, 50% 100%, 40% 80%, 45% 50%, 40% 20%);
+      box-shadow: 0 0 6px rgba(168,50,50,0.6);
+    }
+    .center{
+      position:absolute;
+      width:20px;
+      height:20px;
+      background:radial-gradient(circle, #d4af37 0%, #8b7500 90%);
+      border-radius:50%;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      box-shadow: 0 0 8px rgba(0,0,0,0.8);
+    }
+    .numeral{
+      position:absolute;
+      top:50%;
+      left:50%;
+      transform:translate(-50%,-50%);
+      font-weight:700;
+      user-select:none;
+      font-size:1.5em;
+      font-family: 'Cinzel', serif;
+      color:#f0e6d2;
+      text-shadow: 0 0 6px rgba(0,0,0,0.7);
+    }
+  </style>
+</head>
+<body>
+  <div class="load-container">
+    <input type="file" id="bgLoader" accept="image/*" />
+  </div>
+  <div class="clock" id="clock">
+    <div class="hand hour" id="hour"></div>
+    <div class="hand minute" id="minute"></div>
+    <div class="hand second" id="second"></div>
+    <div class="center"></div>
+  </div>
+
+<script>
+const ROMAN = ['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
+const clock = document.getElementById('clock');
+
+function createNumerals(){
+  const rect = clock.getBoundingClientRect();
+  const radius = rect.width/2 * 0.8;
+  ROMAN.forEach((num,i)=>{
+    const angle = (i*30 - 90) * Math.PI/180; // -90 so XII is at top
+    const x = radius * Math.cos(angle);
+    const y = radius * Math.sin(angle);
+    const div = document.createElement('div');
+    div.className = 'numeral';
+    div.style.left = `calc(50% + ${x}px)`;
+    div.style.top = `calc(50% + ${y}px)`;
+    div.textContent = num;
+    clock.appendChild(div);
+  });
+}
+
+createNumerals();
+
+const hourHand = document.getElementById('hour');
+const minuteHand = document.getElementById('minute');
+const secondHand = document.getElementById('second');
+
+function update(){
+  const now = new Date();
+  const h = now.getHours()%12;
+  const m = now.getMinutes();
+  const s = now.getSeconds();
+
+  const secondAngle = s*6; // step motion
+  const minuteAngle = (m+s/60)*6;
+  const hourAngle = (h+m/60)*30;
+
+  hourHand.style.transform = `translate(-50%,-90%) rotate(${hourAngle}deg)`;
+  minuteHand.style.transform = `translate(-50%,-90%) rotate(${minuteAngle}deg)`;
+  secondHand.style.transform = `translate(-50%,-90%) rotate(${secondAngle}deg)`;
+}
+
+setInterval(update, 1000);
+update();
+
+// Background loader
+const bgLoader = document.getElementById('bgLoader');
+bgLoader.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      clock.style.backgroundImage = `url('${e.target.result}')`;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+</script>
+</body>
+</html>
